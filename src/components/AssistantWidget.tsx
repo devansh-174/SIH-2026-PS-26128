@@ -20,17 +20,35 @@ export function AssistantWidget() {
     }
   }, [messages, isTyping]);
 
-  const handleMicClick = () => {
-    if (isRecording) return;
-    setIsRecording(true);
-    setInput('');
-    
-    // Simulate 3 seconds of recording, then "transcribe" a hardcoded sentence
-    setTimeout(() => {
-      setIsRecording(false);
-      setInput('My cow has a fever.');
-    }, 3000);
+const handleMicClick = () => {
+  const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert('Speech recognition not supported in this browser. Try Chrome or Edge.');
+    return;
+  }
+  if (isRecording) return;
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.interimResults = true;
+  recognition.continuous = false;
+
+  setIsRecording(true);
+  setInput('');
+
+  recognition.onresult = (event: any) => {
+    let transcript = '';
+    for (let i = 0; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    setInput(transcript);
   };
+
+  recognition.onerror = () => setIsRecording(false);
+  recognition.onend = () => setIsRecording(false);
+
+  recognition.start();
+};
 
   const SUGGESTIONS = [
     "What are the symptoms of LSD?",

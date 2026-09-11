@@ -1,6 +1,6 @@
 import diseasesData from '../mock/diseases.json';
 import facilitiesData from '../mock/facilities.json';
-
+import weatherData from '../mock/weather.json';
 export interface ChatMessage {
   id: string;
   sender: 'user' | 'assistant';
@@ -78,9 +78,34 @@ export const processUserMessage = async (message: string): Promise<ChatMessage> 
   // Flow 4: Weather Alerts
   // "Are there any alerts?" or "weather"
   else if (lowerMsg.includes('alert') || lowerMsg.includes('weather') || lowerMsg.includes('rain')) {
-    responseText = "⚠️ WEATHER ALERT: Heavy rain is expected in Patiala tomorrow. Please keep animals indoors and secure all feed.";
-  }
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const currentHour = now.getHours();
+    const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
 
+    const hourlyPatiala = (weatherData as any).hourly?.Patiala || [];
+    const todaysSlots = hourlyPatiala.filter((h: any) => h.date === todayStr);
+
+    let closest = todaysSlots[0];
+    for (const slot of todaysSlots) {
+      if (slot.hour <= currentHour) closest = slot;
+    }
+
+    if (!closest) {
+      // fallback to the old snapshot data if no hourly match for today
+      const district = weatherData.districts['Patiala'];
+      responseText = `Weather for Patiala — ${dateStr}, ${timeStr}\n${district.tempC}°C, ${district.humidityPct}% humidity, ${district.rainfallLast7dMm}mm rain (last 7 days).`;
+    } else {
+      const alertLine = closest.rainChancePct >= 30
+        ? `⚠️ ${closest.rainChancePct}% chance of rain — keep animals sheltered.`
+        : closest.feelsLikeC >= 40
+        ? `⚠️ Feels like ${closest.feelsLikeC}°C — heat stress risk, ensure shade and water access.`
+        'No active alerts.';
+
+      responseText = `Weather for Patiala — ${dateStr}, ${timeStr}\n${closest.condition}, ${closest.tempC}°C (feels like ${closest.feelsLikeC}°C), ${closest.humidityPct}% humidity.\n${alertLine}`;
+    }
+  }
   // Flow 5: Vet / Appointment
   // "Speak to a vet" or "book appointment"
   else if (lowerMsg.includes('vet') || lowerMsg.includes('appointment') || lowerMsg.includes('doctor')) {

@@ -101,13 +101,13 @@ export const processUserMessage = async (message: string): Promise<ChatMessage> 
         ? `⚠️ ${closest.rainChancePct}% chance of rain — keep animals sheltered.`
         : closest.feelsLikeC >= 40
         ? `⚠️ Feels like ${closest.feelsLikeC}°C — heat stress risk, ensure shade and water access.`
-        'No active alerts.';
+        : 'No active alerts.';
 
       responseText = `Weather for Patiala — ${dateStr}, ${timeStr}\n${closest.condition}, ${closest.tempC}°C (feels like ${closest.feelsLikeC}°C), ${closest.humidityPct}% humidity.\n${alertLine}`;
     }
   }
   // Flow 5: Vet / Appointment
-  // "Speak to a vet" or "book appointment"
+  // "Speak to a vet" or "book an appointment"
   else if (lowerMsg.includes('vet') || lowerMsg.includes('appointment') || lowerMsg.includes('doctor')) {
     responseText = "I can help you connect with a veterinary officer. The next available appointment in your district (Patiala) is tomorrow at 10:00 AM. Would you like me to book it?";
   }
